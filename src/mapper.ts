@@ -1,4 +1,5 @@
 import type { GraphList, GraphRecurrence, GraphTask } from "./graph-types";
+import { normalizeDue } from "./tz";
 import type { DayName, Importance, NormList, NormTask, Recurrence, RecurrenceType, TaskStatus } from "./model";
 
 const STATUSES: TaskStatus[] = ["notStarted", "inProgress", "completed", "waitingOnOthers", "deferred"];
@@ -34,7 +35,7 @@ export function mapTask(g: GraphTask, listId: string): NormTask {
     status,
     completed: status === "completed",
     importance,
-    dueDateTime: g.dueDateTime?.dateTime ?? null,
+    dueDateTime: normalizeDue(g.dueDateTime),
     reminderDateTime: g.reminderDateTime?.dateTime ?? null,
     isReminderOn: g.isReminderOn === true,
     recurrence: mapRecurrence(g.recurrence),
@@ -48,6 +49,7 @@ export function mapTask(g: GraphTask, listId: string): NormTask {
     createdDateTime: g.createdDateTime ?? null,
     hasAttachments: g.hasAttachments === true,
     linkedResourceCount: g.linkedResources?.length ?? 0,
+    linkedResourcesUnknown: g.linkedResources === undefined && g.linkedResourcesUnknown === true,
   };
 }
 

@@ -39,17 +39,21 @@ export function loadGoogleScript(): Promise<void> {
   });
 }
 
+export const GOOGLE_TOKEN_TIMEOUT_MS = 120_000;
+
 /** Must be called from a click handler so the popup is allowed. The token stays in memory. */
-export async function requestGoogleToken(clientId: string): Promise<string> {
+export async function requestGoogleToken(clientId: string, timeoutMs = GOOGLE_TOKEN_TIMEOUT_MS): Promise<string> {
   await loadGoogleScript();
   const g = window.google;
   if (!g) throw new Error("Google sign-in did not load.");
   return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Google sign-in timed out after 2 minutes. Try again.")), timeoutMs);
+    const done = <T>(fn: (v: T) => void) => (v: T): void => { clearTimeout(timer); fn(v); };
     const tc = g.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: GOOGLE_SCOPE,
-      callback: (r) => (r.access_token ? resolve(r.access_token) : reject(new Error(r.error_description ?? r.error ?? "Google sign-in failed"))),
-      error_callback: (e) => reject(new Error(e.message ?? e.type ?? "Google sign-in was closed")),
+      callback: done((r: TokenResponse) => (r.access_token ? resolve(r.access_token) : reject(new Error(r.error_description ?? r.error ?? "Google sign-in failed")))),
+      error_callback: done((e: { type?: string; message?: string }) => reject(new Error(e.message ?? e.type ?? "Google sign-in was closed"))),
     });
     tc.requestAccessToken();
   });

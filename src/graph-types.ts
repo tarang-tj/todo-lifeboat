@@ -49,6 +49,8 @@ export interface GraphTask {
   recurrence?: GraphRecurrence | null;
   checklistItems?: GraphChecklistItem[];
   linkedResources?: GraphLinkedResource[];
+  /** Set by the client when the linkedResources call failed in the fallback path. Not a Graph field. */
+  linkedResourcesUnknown?: boolean;
 }
 export interface GraphList {
   id: string;

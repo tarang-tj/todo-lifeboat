@@ -44,6 +44,8 @@ export interface NormTask {
   createdDateTime: string | null;
   hasAttachments: boolean;
   linkedResourceCount: number;
+  /** True when linked items could not be read, so the count above is not reliable. */
+  linkedResourcesUnknown: boolean;
 }
 
 export interface NormList {
