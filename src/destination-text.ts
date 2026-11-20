@@ -17,9 +17,12 @@ export function plainBody(t: NormTask): string {
     .trim();
 }
 
-/** The repeat rule as a Todoist due_string, or null when the destination cannot express it. */
+/**
+ * The repeat rule as a Todoist due_string, or null when it cannot be expressed.
+ * Never for a completed task: closing a recurring Todoist task advances it to the next date instead of finishing it.
+ */
 export function todoistRecurrence(t: NormTask): string | null {
-  return t.recurrence ? recurrenceToTodoist(t.recurrence) : null;
+  return t.recurrence && !t.completed ? recurrenceToTodoist(t.recurrence) : null;
 }
 
 export function todoistDescription(t: NormTask): string {

@@ -63,7 +63,9 @@ function todoist(f: FieldKey, t: NormTask): FateInfo {
     case "importance": return t.importance === "high" ? x("High becomes priority 4 (urgent)") : l("Todoist has no low priority");
     case "due": return todoistRecurrence(t) ? x("Next date is set by Todoist from the repeat rule") : k();
     case "reminder": return l("Reminders are not set");
-    case "recurrence": return todoistRecurrence(t) ? x("Becomes a Todoist repeat phrase") : x("Not expressible; kept as text in the description, task will not repeat");
+    case "recurrence":
+      if (t.completed) return x("Task is completed; the rule is kept as text in the description");
+      return todoistRecurrence(t) ? x("Becomes a Todoist repeat phrase") : x("Not expressible; kept as text in the description, task will not repeat");
     case "notes": return t.bodyType === "html" ? x("HTML flattened to plain text") : k();
     case "steps": return x("Become subtasks");
     case "categories": return x("Become labels");
