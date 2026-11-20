@@ -85,7 +85,7 @@ Finding: **REST v2 is superseded.** The v1 page says API v1 "unifies the Sync AP
 
 **2026-11-20, deployed site (https://tarangj.com/todo-lifeboat/), Chrome on macOS, work or school account (UW tenant):**
 - MSAL v5 popup plus redirect bridge: sign-in completed and returned to the page. Verified end to end.
-- Graph read with delegated `Tasks.Read`: 3 lists and 3 test tasks returned, including a completed task, a monthly repeat with a due date, and a high-importance task with 2 steps and a note. Steps (`checklistItems`) and recurrence came through `$expand`; no fallback was needed.
+- Graph read with delegated `Tasks.Read`: 3 lists and 3 test tasks returned, including a completed task, a monthly repeat with a due date, and a high-importance task with 2 steps and a note. Steps and recurrence arrived (whether through `$expand` or the per-task fallback was not observed).
 - The built CSP did not block anything (no console errors).
 - CSV export: downloaded `todo-export.csv`, read back, receipt "3 of 3 tasks arrived". File contents checked by hand: repeat written as "Repeats every month on day 20", steps as one cell with one step per line, note and importance intact.
 - Due date read back as `2026-11-20T00:00:00` with the time zone header, so the date did not shift.
