@@ -1,10 +1,15 @@
-import { accountName, loadAll, signIn, signOut } from "../adapters/graph";
+import { accountName, loadAll, signIn, signOut, type AccountKind } from "../adapters/graph";
 import { ReauthRequiredError } from "../errors";
 import { h } from "./dom";
 import { createDestUI, type Config, type Ctx } from "./dest";
 import { inventoryView } from "./views";
 
 export type { Config };
+
+const SIGNIN_KINDS: [AccountKind, string][] = [
+  ["personal", "Personal account (Outlook.com, Hotmail, Live)"],
+  ["work", "Work or school account"],
+];
 
 export function startApp(root: HTMLElement, cfg: Config, storage: Storage = sessionStorage): void {
   const ctx: Ctx = { cfg, lists: null, accountId: "", storage, say: (m) => { status.textContent = m; } };
@@ -14,6 +19,7 @@ export function startApp(root: HTMLElement, cfg: Config, storage: Storage = sess
   const secDest = h("section", { "aria-labelledby": "h-dest", hidden: true });
   const secOut = h("section", { "aria-labelledby": "h-out", hidden: true, "aria-live": "polite" });
   const destUI = createDestUI(ctx, secDest, secOut);
+  let lastKind: AccountKind = "personal";
 
   root.append(h("main", {},
     h("h1", {}, "To Do Lifeboat"),
@@ -21,21 +27,30 @@ export function startApp(root: HTMLElement, cfg: Config, storage: Storage = sess
     h("p", { class: "muted" }, "Your tasks go straight from Microsoft to your new app in your browser; nothing is stored on a server. This is an independent tool and is not affiliated with Microsoft, Google or Todoist."),
     secSignin, secInv, secDest, secOut, status));
 
-  function renderSignin(label = "Sign in and read my tasks"): void {
+  function renderSignin(reauth = false): void {
     secSignin.replaceChildren(h("h2", { id: "h-signin" }, "1. Sign in to Microsoft"));
     if (!cfg.msClientId) {
       secSignin.append(h("div", { class: "card", role: "alert" }, h("strong", {}, "Microsoft sign-in is not set up. "), "Set VITE_MS_CLIENT_ID in .env.local and restart. See the README for the app registration steps."));
       return;
     }
-    const btn = h("button", { type: "button", onclick: () => void doSignIn(btn) }, label);
-    secSignin.append(h("p", {}, "Read-only access (Tasks.Read). Works with personal and work or school accounts."), btn);
+    secSignin.append(h("p", {}, "Read-only access (Tasks.Read). Choose the kind of account your To Do lists are in."));
+    if (reauth) {
+      const btn = h("button", { type: "button", onclick: () => void doSignIn(btn, lastKind) }, "Re-authorize");
+      secSignin.append(btn);
+      return;
+    }
+    for (const [kind, text] of SIGNIN_KINDS) {
+      const btn = h("button", { type: "button", class: kind === "work" ? "secondary" : undefined, onclick: () => void doSignIn(btn, kind) }, text);
+      secSignin.append(btn, " ");
+    }
   }
 
-  async function doSignIn(btn: HTMLButtonElement): Promise<void> {
+  async function doSignIn(btn: HTMLButtonElement, kind: AccountKind): Promise<void> {
     btn.disabled = true;
+    lastKind = kind;
     try {
       ctx.say("Signing in...");
-      ctx.accountId = await signIn(cfg.msClientId);
+      ctx.accountId = await signIn(cfg.msClientId, kind);
       ctx.lists = await loadAll(ctx.say);
       ctx.say(`Signed in as ${accountName()}.`);
       secSignin.replaceChildren(h("h2", { id: "h-signin" }, "1. Signed in"),
@@ -46,7 +61,7 @@ export function startApp(root: HTMLElement, cfg: Config, storage: Storage = sess
       destUI.render();
     } catch (e) {
       // Token expired or popup needed: a fresh click is a user gesture, so offer it instead of opening a popup here.
-      if (e instanceof ReauthRequiredError) { ctx.say(e.message); renderSignin("Re-authorize"); return; }
+      if (e instanceof ReauthRequiredError) { ctx.say(e.message); renderSignin(true); return; }
       ctx.say(`Could not read your tasks: ${(e as Error).message}`);
       btn.disabled = false;
     }

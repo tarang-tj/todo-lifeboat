@@ -32,6 +32,16 @@ describe("M2: MSAL config", () => {
   });
 });
 
+describe("Sign-in authorities", () => {
+  it("routes personal accounts to consumers and work or school to organizations", async () => {
+    const { AUTHORITY } = await import("../src/adapters/graph");
+    expect(AUTHORITY).toEqual({
+      personal: "https://login.microsoftonline.com/consumers",
+      work: "https://login.microsoftonline.com/organizations",
+    });
+  });
+});
+
 describe("L1: CSP", () => {
   it("has the required directives", () => {
     expect(CSP).toContain("default-src 'self'");

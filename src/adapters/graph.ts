@@ -20,11 +20,20 @@ async function client(clientId: string): Promise<PublicClientApplication> {
   return pca;
 }
 
-/** Must run inside a click handler: it opens a popup. Always shows the account picker so people with
- * both a work and a personal account choose which To Do to read, instead of silent single sign-on. */
-export async function signIn(clientId: string): Promise<string> {
+export type AccountKind = "personal" | "work";
+
+/** Personal accounts sign in through the consumers authority, work or school through organizations.
+ * Splitting them matters on managed devices: device single sign-on answers the shared "common" picker
+ * with the work account, so someone with both could never reach their personal To Do. */
+export const AUTHORITY: Record<AccountKind, string> = {
+  personal: "https://login.microsoftonline.com/consumers",
+  work: "https://login.microsoftonline.com/organizations",
+};
+
+/** Must run inside a click handler: it opens a popup. */
+export async function signIn(clientId: string, kind: AccountKind): Promise<string> {
   const app = await client(clientId);
-  const res = await app.loginPopup({ scopes: SCOPES, prompt: "select_account" });
+  const res = await app.loginPopup({ scopes: SCOPES, prompt: "select_account", authority: AUTHORITY[kind] });
   account = res.account;
   return res.account.homeAccountId;
 }

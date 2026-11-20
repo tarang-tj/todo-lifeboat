@@ -17,10 +17,11 @@ describe("UI smoke", () => {
     expect(root.textContent).toContain("not affiliated with Microsoft");
   });
 
-  it("shows a sign-in button when configured", () => {
+  it("offers separate personal and work or school sign-in when configured", () => {
     const root = document.createElement("div");
     startApp(root, { msClientId: "abc", googleClientId: "" });
-    expect(root.querySelector("button")?.textContent).toContain("Sign in");
+    const labels = [...root.querySelectorAll("button")].map((b) => b.textContent);
+    expect(labels).toEqual(["Personal account (Outlook.com, Hotmail, Live)", "Work or school account"]);
   });
 
   it("renders task text as text, never as markup", () => {
