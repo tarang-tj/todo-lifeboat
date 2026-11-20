@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { WriteAdapter } from "../src/adapters/adapter";
+import type { ReadBack, WriteAdapter } from "../src/adapters/adapter";
 import { buildFileReceipt, buildReceipt, countWork, newMoveState, runMove } from "../src/move";
 import { parseExport } from "../src/export-parse";
 import { exportFile } from "../src/exporters";
@@ -15,6 +15,7 @@ function fakeAdapter(failTitles: string[] = []) {
   let n = 0;
   const adapter: WriteAdapter = {
     id: "todoist",
+    warnings: [],
     async createList() { return `P${++n}`; },
     async createTask(_l: string, t: NormTask) {
       if (failTitles.includes(t.title)) throw new Error("boom");
@@ -28,7 +29,7 @@ function fakeAdapter(failTitles: string[] = []) {
       if (p) p.stepCount = (p.stepCount ?? 0) + 1;
       return `S${++n}`;
     },
-    async readBack() { return store; },
+    async readBack(): Promise<ReadBack> { return { tasks: store, listCounts: new Map() }; },
   };
   return { adapter, store, created };
 }

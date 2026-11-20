@@ -26,12 +26,13 @@ export function inventoryView(lists: NormList[]): HTMLElement {
 
 export function previewView(p: Preview): HTMLElement {
   const dest = DEST_LABELS[p.dest];
-  if (p.rows.length === 0) return h("p", {}, `Everything in your ${p.taskCount} tasks moves to ${dest} as plain titles.`);
+  const warn = p.warnings.length ? h("div", { class: "card", role: "note" }, ...p.warnings.map((w) => h("p", { class: "warn" }, w))) : null;
+  if (p.rows.length === 0) return h("div", {}, warn, h("p", {}, `Everything in your ${p.taskCount} tasks moves to ${dest} as plain titles.`));
   const body = p.rows.map((r) => h("tr", {},
     h("th", { scope: "row" }, r.label), num(r.total), num(r.kept), num(r.transformed), num(r.lost),
     h("td", {}, ...Object.entries(r.variants).map(([n, c]) => h("div", {}, `${c}: ${n}`)))));
   const flagged = p.flags.slice(0, 100);
-  return h("div", {},
+  return h("div", {}, warn,
     h("div", { class: "table-wrap" }, h("table", {},
       h("caption", {}, `What survives the move to ${dest} (${p.taskCount} tasks, ${p.listCount} lists)`),
       h("thead", {}, h("tr", {}, th("Field"), th("Tasks with it", true), th("Kept", true), th("Changed", true), th("Lost", true), th("What happens"))),
@@ -51,15 +52,37 @@ export function errorsView(errors: MoveError[]): HTMLElement {
     errors.length > 50 ? h("p", { class: "muted" }, `${errors.length - 50} more not shown.`) : null);
 }
 
-export function receiptView(r: Receipt, destLabel: string): HTMLElement {
-  const clean = r.missing.length === 0 && r.failed.length === 0 && r.mismatches.length === 0;
+export interface ReceiptContext {
+  /** Move errors from the run. A receipt is only clean when this is 0. */
+  errorCount: number;
+  warnings: string[];
+}
+
+export function receiptView(r: Receipt, destLabel: string, ctx: ReceiptContext = { errorCount: 0, warnings: [] }): HTMLElement {
+  const clean = r.missing.length === 0 && r.failed.length === 0 && r.mismatches.length === 0 && r.listCountDiffs.length === 0 && ctx.errorCount === 0;
   const list = (title: string, items: string[]): HTMLElement | null =>
     items.length ? h("details", {}, h("summary", {}, `${title} (${items.length})`), h("ul", { class: "plain" }, ...items.slice(0, 100).map((i) => h("li", {}, i)))) : null;
   return h("div", { class: "card" },
     h("p", {}, h("strong", { class: clean ? "ok" : "warn" }, `${r.arrived} of ${r.total} tasks arrived in ${destLabel}`),
-      ` (${r.exact} with every checked field matching).`),
+      ` (${r.exact} with every checked field matching).`, clean ? null : " Not clean: see below."),
     list("Missing from the destination", r.missing.map((m) => m.title)),
     list("Failed during the move", r.failed.map((m) => m.title)),
     list("Field differences", r.mismatches.map((m) => `${m.title}: ${m.field} should be ${m.expected}, found ${m.actual}`)),
+    list("Lists with a different task count (extra tasks mean duplicates)", r.listCountDiffs.map((c) => `${c.list}: expected ${c.expected}, found ${c.actual}`)),
+    list("Notes from the move", ctx.warnings),
     h("p", { class: "muted" }, "Fields a destination cannot report back are not compared. Anything the preview marked as changed or lost is expected."));
+}
+
+/** Set by property, not attribute, so the token is never written into the markup. */
+export function todoistTokenInput(initial: string, onInput: (v: string) => void): HTMLInputElement {
+  const input = h("input", { id: "td-token", type: "password", autocomplete: "new-password", spellcheck: "false", oninput: () => onInput(input.value.trim()) });
+  input.value = initial;
+  return input;
+}
+
+export function moveSummary(created: number, total: number, errors: MoveError[], paused: string | null): HTMLElement {
+  return h("div", { class: "card" },
+    h("p", {}, h("strong", {}, `${created} of ${total} items written.`), errors.length ? ` ${errors.length} failed.` : ""),
+    paused ? h("p", { class: "bad", role: "alert" }, paused) : null,
+    errors.length ? errorsView(errors) : null);
 }

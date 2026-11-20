@@ -14,7 +14,7 @@ v1, built from the vendors' API docs and tested against fixtures and scripted HT
 
 ## Privacy
 
-Your tasks go straight from Microsoft to your new app in your browser; nothing is stored on a server. There is no backend and no analytics. The Todoist token is held in memory and disappears when you close the tab. Microsoft sign-in tokens are kept by the Microsoft library in the browser's session storage for the life of the tab. Google tokens are held in memory.
+Your tasks go straight from Microsoft to your new app in your browser; nothing is stored on a server. There is no backend and no analytics. The Todoist token is held in memory and disappears when you close the tab. Microsoft and Google tokens are held in memory only. Move progress (which To Do item became which destination item, no task text and no tokens) is saved in the tab's session storage so a stopped run can resume; "Forget saved progress" clears it. The built pages ship a Content Security Policy that limits where the page can connect.
 
 ## What moves
 
@@ -41,6 +41,8 @@ The preview in the app computes these counts for your own data, with a per-task 
 - My Day is not read; the To Do API reference pages used here do not list it.
 - Todoist and Google Tasks do not hold To Do's repeat rules the same way. Rules Todoist cannot express are kept as text and the task stops repeating.
 - Todoist's priority direction is described two ways in its docs. The receipt reads priority back and will flag a mismatch if the guess is wrong.
+- Todoist's free plan reportedly caps projects and active tasks per project (third-party figures, not in Todoist's API docs); the preview warns when you are over them.
+- If a Todoist or Google request fails in transit, the app looks the item up before creating it again. If the destination already has a same-name project or list it is reused, with a warning, so tasks already in it can end up duplicated.
 - Browser-only means a very large account (thousands of tasks) takes a while: writes are spaced out to stay inside rate limits.
 
 ## Setup
@@ -51,7 +53,7 @@ You register two apps yourself. This repository contains no client IDs.
 
 1. In the Entra admin center, open App registrations and choose New registration.
 2. Supported account types: accounts in any organizational directory and personal Microsoft accounts.
-3. Redirect URI: platform Single-page application (SPA), value `http://localhost:5173` for local work, plus your deployed origin later. The app uses the current page address without a query string.
+3. Redirect URI: platform Single-page application (SPA), value `http://localhost:5173/redirect.html` for local work, plus `https://your-host/path/redirect.html` when deployed. MSAL Browser v5 returns sign-in popups through this bridge page (`redirect.html`, built from `src/redirect.ts`), so the registered URI must be the bridge page, not the site root. The app derives it as `redirect.html` next to the page that is open.
 4. Under API permissions add Microsoft Graph, Delegated, `Tasks.Read`.
 5. Copy the Application (client) ID into `VITE_MS_CLIENT_ID`.
 
@@ -86,7 +88,7 @@ npm test           # vitest
 npm run build      # typecheck + production bundle in dist/
 ```
 
-`dist/` is static files and can be hosted anywhere. Remember to add the hosting origin to both app registrations.
+`dist/` is static files and can be hosted anywhere. Remember to register `<host>/<path>/redirect.html` as the SPA redirect URI in Entra, and add the hosting origin to the Google client.
 
 ## How it is laid out
 

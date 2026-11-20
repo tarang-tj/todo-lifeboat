@@ -34,7 +34,7 @@ describe("UI smoke", () => {
   });
 
   it("renders a receipt summary", () => {
-    const view = receiptView({ total: 5, arrived: 4, exact: 3, failed: [], missing: [{ sourceId: "a", title: "Lost one" }], mismatches: [] }, "Todoist");
+    const view = receiptView({ total: 5, arrived: 4, exact: 3, failed: [], missing: [{ sourceId: "a", title: "Lost one" }], mismatches: [], listCountDiffs: [] }, "Todoist");
     expect(view.textContent).toContain("4 of 5 tasks arrived in Todoist");
     expect(view.textContent).toContain("Lost one");
   });

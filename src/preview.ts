@@ -23,6 +23,8 @@ export interface Preview {
   listCount: number;
   rows: PreviewRow[];
   flags: TaskFlag[];
+  /** Plan or data caveats shown above the table. */
+  warnings: string[];
 }
 
 export function buildPreview(dest: DestId, lists: NormList[]): Preview {
@@ -49,5 +51,27 @@ export function buildPreview(dest: DestId, lists: NormList[]): Preview {
       if (items.length) flags.push({ sourceId: t.sourceId, title: t.title, list: list.name, items });
     }
   }
-  return { dest, taskCount, listCount: lists.length, rows: [...rows.values()].filter((r) => r.total > 0), flags };
+  return { dest, taskCount, listCount: lists.length, rows: [...rows.values()].filter((r) => r.total > 0), flags, warnings: warningsFor(dest, lists) };
+}
+
+// Third-party-sourced Todoist free-plan figures, NOT from Todoist's API docs (see docs/api-notes.md). UNVERIFIED.
+export const TODOIST_FREE_PROJECTS = 5;
+export const TODOIST_FREE_ACTIVE_TASKS = 300;
+
+function warningsFor(dest: DestId, lists: NormList[]): string[] {
+  const out: string[] = [];
+  if (dest === "todoist") {
+    if (lists.length > TODOIST_FREE_PROJECTS) {
+      out.push(`You have ${lists.length} lists. Todoist's free plan is reported to allow ${TODOIST_FREE_PROJECTS} projects (a third-party figure, not confirmed by Todoist's docs), so some lists may fail to create.`);
+    }
+    for (const l of lists) {
+      const active = l.tasks.filter((t) => !t.completed).reduce((n, t) => n + 1 + t.steps.filter((s) => !s.checked).length, 0);
+      if (active > TODOIST_FREE_ACTIVE_TASKS) {
+        out.push(`"${l.name}" would hold about ${active} active tasks. Todoist's free plan is reported to allow ${TODOIST_FREE_ACTIVE_TASKS} per project (third-party figure, unconfirmed).`);
+      }
+    }
+  }
+  const unknown = lists.reduce((n, l) => n + l.tasks.filter((t) => t.linkedResourcesUnknown).length, 0);
+  if (unknown) out.push(`Linked items could not be read for ${unknown} task${unknown === 1 ? "" : "s"}, so the "Linked items" count leaves them out.`);
+  return out;
 }

@@ -24,7 +24,8 @@ describe("buildPreview on the sample account", () => {
 
   it("Todoist: separates expressible rules from text-only ones in the variants", () => {
     const v = row(buildPreview("todoist", lists), "recurrence")?.variants ?? {};
-    expect(v["Becomes a Todoist repeat phrase"]).toBe(2); // monthly 15th and biweekly Mon/Wed
+    expect(v["Becomes a Todoist repeat phrase"]).toBe(1); // monthly 15th
+    expect(v["Task is completed; the rule is kept as text in the description"]).toBe(1); // completed biweekly
     expect(v["Not expressible; kept as text in the description, task will not repeat"]).toBe(1); // quarterly
   });
 
