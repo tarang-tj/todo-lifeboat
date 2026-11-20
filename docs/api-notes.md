@@ -1,6 +1,6 @@
 # API notes (read 2026-11-20)
 
-Every field name below was read from the linked page on 2026-11-20. Items marked **UNVERIFIED** could not be confirmed from docs and have not been run against a live account. No live call has been made to any of these APIs by this project.
+Every field name below was read from the linked page on 2026-11-20. Items marked **UNVERIFIED** could not be confirmed from docs and have not been run against a live account. Live runs are logged under "Live runs" at the end of this file.
 
 ## Microsoft Graph To Do (v1.0)
 
@@ -80,3 +80,17 @@ Finding: **REST v2 is superseded.** The v1 page says API v1 "unifies the Sync AP
 ## Plan deviations
 - Plan A2 said "Todoist's current public API"; docs show this is API v1, not REST v2. Followed the docs.
 - Plan said Google "tasks.insert/list with parent and due semantics": confirmed, with the date-only `due` caveat above.
+
+## Live runs
+
+**2026-11-20, deployed site (https://tarangj.com/todo-lifeboat/), Chrome on macOS, work or school account (UW tenant):**
+- MSAL v5 popup plus redirect bridge: sign-in completed and returned to the page. Verified end to end.
+- Graph read with delegated `Tasks.Read`: 3 lists and 3 test tasks returned, including a completed task, a monthly repeat with a due date, and a high-importance task with 2 steps and a note. Steps (`checklistItems`) and recurrence came through `$expand`; no fallback was needed.
+- The built CSP did not block anything (no console errors).
+- CSV export: downloaded `todo-export.csv`, read back, receipt "3 of 3 tasks arrived". File contents checked by hand: repeat written as "Repeats every month on day 20", steps as one cell with one step per line, note and importance intact.
+- Due date read back as `2026-11-20T00:00:00` with the time zone header, so the date did not shift.
+- Bug found and fixed: on a managed Mac, device single sign-on answered the `common` picker with the work account even with `prompt=select_account`. Sign-in is now split into personal (`consumers`) and work or school (`organizations`) buttons.
+
+**Personal Microsoft account:** the consumers authority accepts the app and shows the consent screen ("unverified" publisher, Accept or Deny). A full personal-account read is **UNVERIFIED** until the account owner finishes sign-in.
+
+Still **UNVERIFIED** live: Todoist writes and read-back, Google Tasks (no OAuth client configured on the deployed site), Markdown and JSON exports in a browser.

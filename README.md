@@ -2,6 +2,8 @@
 
 Move your Microsoft To Do tasks to Todoist, Google Tasks, or a CSV, Markdown or JSON file. Before anything moves, it shows what each destination keeps, changes, or loses for your actual tasks. After the move, it reads the destination back and tells you what arrived.
 
+**Try it: https://tarangj.com/todo-lifeboat/**
+
 **Not affiliated with Microsoft, Google or Todoist.** This is an independent tool.
 
 ## Why
