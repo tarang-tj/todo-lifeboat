@@ -41,7 +41,9 @@ export function createDestUI(ctx: Ctx, secDest: HTMLElement, secOut: HTMLElement
     return s;
   };
   const setup = (name: string, vars: string): HTMLElement =>
-    h("div", { class: "card", role: "alert" }, h("strong", {}, `${name} is not set up. `), `Set ${vars} in .env.local and restart. See the README.`);
+    h("div", { class: "card", role: "alert" }, h("strong", {}, `${name} is not set up. `),
+      // Setup hints are for the developer; a visitor on the deployed site gets a plain next step.
+      import.meta.env.DEV ? `Set ${vars} in .env.local and restart. See the README.` : "It isn't available on this site yet. Choose another destination, or download a file.");
 
   function render(): void {
     if (!ctx.lists) return;

@@ -20,10 +20,11 @@ async function client(clientId: string): Promise<PublicClientApplication> {
   return pca;
 }
 
-/** Must run inside a click handler: it opens a popup. */
+/** Must run inside a click handler: it opens a popup. Always shows the account picker so people with
+ * both a work and a personal account choose which To Do to read, instead of silent single sign-on. */
 export async function signIn(clientId: string): Promise<string> {
   const app = await client(clientId);
-  const res = await app.loginPopup({ scopes: SCOPES });
+  const res = await app.loginPopup({ scopes: SCOPES, prompt: "select_account" });
   account = res.account;
   return res.account.homeAccountId;
 }
